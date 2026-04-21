@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Mail, Loader2 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth.jsx'
 
@@ -8,6 +8,12 @@ export default function AuthModal({ onClose }) {
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

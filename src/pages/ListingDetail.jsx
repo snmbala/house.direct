@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth.jsx'
 import ListingsMap from '../components/Map/ListingsMap'
 import AuthModal from '../components/Auth/AuthModal'
+import SEOMeta from '../components/SEOMeta.jsx'
+import { useKeyboard } from '../hooks/useKeyboard.js'
 
 const BHK_LABELS = { 0: 'Studio', 1: '1 BHK', 2: '2 BHK', 3: '3 BHK', 4: '4+ BHK' }
 
@@ -21,6 +23,12 @@ export default function ListingDetail() {
   const [contactCooldown, setContactCooldown] = useState(false)
 
   useEffect(() => { fetchListing() }, [id])
+
+  useKeyboard({
+    Escape:     () => navigate(-1),
+    ArrowLeft:  () => listing?.images?.length > 1 && setActiveImg(i => Math.max(0, i - 1)),
+    ArrowRight: () => listing?.images?.length > 1 && setActiveImg(i => Math.min(listing.images.length - 1, i + 1)),
+  })
 
   const fetchListing = async () => {
     const { data } = await supabase.from('listings').select('*').eq('id', id).single()
@@ -65,8 +73,36 @@ export default function ListingDetail() {
 
   const isOwner = user?.id === listing.user_id
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: listing.title,
+    description: listing.description ?? listing.title,
+    image: listing.images?.[0],
+    url: window.location.href,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: listing.city,
+      addressRegion: listing.state,
+      postalCode: listing.pincode,
+      addressCountry: 'IN',
+    },
+    offers: {
+      '@type': 'Offer',
+      price: listing.rent_amount,
+      priceCurrency: 'INR',
+      priceSpecification: { '@type': 'UnitPriceSpecification', priceType: 'monthly' },
+    },
+  }
+
   return (
     <>
+      <SEOMeta
+        title={listing.title}
+        description={`${listing.title} in ${listing.city}, ${listing.state}. ₹${Number(listing.rent_amount).toLocaleString('en-IN')}/month. ${listing.description ?? ''}`}
+        image={listing.images?.[0]}
+        jsonLd={jsonLd}
+      />
       <div className="bg-white dark:bg-black min-h-screen">
         <div className="max-w-5xl mx-auto px-4 py-6">
           <button

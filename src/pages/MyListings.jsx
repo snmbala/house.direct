@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PlusCircle, Eye, EyeOff, Trash2, Loader2, MessageSquare } from 'lucide-react'
+import { PlusCircle, Eye, EyeOff, Trash2, Loader2, MessageSquare, Pencil } from 'lucide-react'
+import SEOMeta from '../components/SEOMeta.jsx'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth.jsx'
 
@@ -69,6 +70,7 @@ export default function MyListings() {
 
   return (
     <div className="bg-white dark:bg-black min-h-screen">
+      <SEOMeta title="My Listings" description="Manage your rental listings on HouseNearby." />
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-7">
           <div>
@@ -138,6 +140,13 @@ export default function MyListings() {
                     title="View"
                   >
                     <Eye size={14} />
+                  </button>
+                  <button
+                    onClick={() => navigate(`/edit/${listing.id}`)}
+                    className="p-2 text-neutral-400 dark:text-neutral-600 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-lg transition-colors"
+                    title="Edit"
+                  >
+                    <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => toggleActive(listing.id, listing.is_active)}

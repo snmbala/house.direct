@@ -167,27 +167,68 @@ html.dark .locate-btn:hover {
   background: #1a1a1a;
 }
 
-/* ── Price pin markers ──────────────────────────────────── */
+/* ── Map card markers ───────────────────────────────────── */
 
-.price-pin {
-  background: #0a0a0a;
-  color: #ffffff;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  transform: translateX(-50%);
-  display: inline-block;
+.map-card {
+  position: relative;
+  width: 88px;
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-html.dark .price-pin {
-  background: #ffffff;
+.map-card:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.08);
+  z-index: 1000 !important;
+}
+
+.map-card img, .map-card > div:first-child {
+  border-radius: 10px 10px 0 0;
+}
+
+.map-card-price {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
   color: #0a0a0a;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  padding: 4px 6px;
+  background: #ffffff;
+  border-radius: 0 0 10px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-card-tip {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #ffffff;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+}
+
+html.dark .map-card {
+  background: #111111;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+html.dark .map-card-price {
+  background: #111111;
+  color: #ffffff;
+}
+
+html.dark .map-card-tip {
+  border-top-color: #111111;
 }
 
 /* ── User location pulse ────────────────────────────────── */
@@ -207,6 +248,13 @@ html.dark .price-pin {
 .search-dropdown {
   animation: dropdown-in 0.15s ease;
 }
+
+/* ── Thin horizontal scrollbar for image strips ─────────── */
+
+.img-strip::-webkit-scrollbar { height: 3px; }
+.img-strip::-webkit-scrollbar-track { background: transparent; }
+.img-strip::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 99px; }
+html.dark .img-strip::-webkit-scrollbar-thumb { background: #404040; }
 
 /* ── Smooth page transitions ────────────────────────────── */
 

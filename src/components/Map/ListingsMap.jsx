@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap, ZoomControl } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
 import { useNavigate } from 'react-router-dom'
 
 const LOCATE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>`
+const HOUSE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -12,11 +13,31 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-const priceIcon = (price) => L.divIcon({
-  className: '',
-  html: `<div class="price-pin">₹${Number(price).toLocaleString('en-IN')}</div>`,
-  iconAnchor: [0, 12],
-})
+const listingCardIcon = (listing, hovered = false) => {
+  const thumb = listing.images?.[0]
+  const price = `₹${Number(listing.rent_amount).toLocaleString('en-IN')}`
+  const img = thumb
+    ? `<img src="${thumb}" style="width:100%;height:52px;object-fit:cover;display:block;" />`
+    : `<div style="width:100%;height:52px;display:flex;align-items:center;justify-content:center;background:#f5f5f5;">${HOUSE_SVG}</div>`
+
+  const activeStyle = hovered
+    ? 'transform:translateY(-4px) scale(1.08);box-shadow:0 8px 24px rgba(0,0,0,0.28),0 0 0 2.5px #0a0a0a;'
+    : ''
+
+  return L.divIcon({
+    className: '',
+    html: `
+      <div class="map-card" style="${activeStyle}">
+        ${img}
+        <div class="map-card-price">${price}</div>
+        <div class="map-card-tip"></div>
+      </div>
+    `,
+    iconSize: [88, 84],
+    iconAnchor: [44, 84],
+    popupAnchor: [0, -88],
+  })
+}
 
 const userLocationIcon = L.divIcon({
   className: '',
@@ -73,8 +94,15 @@ export default function ListingsMap({
   center = [20.5937, 78.9629],
   zoom = 5,
   userCoords = null,
+  onSelect = null,
+  hoveredId = null,
 }) {
   const navigate = useNavigate()
+
+  const handleMarkerClick = (listing) => {
+    if (onSelect) onSelect(listing)
+    else navigate(`/listing/${listing.id}`)
+  }
 
   return (
     <MapContainer
@@ -98,44 +126,21 @@ export default function ListingsMap({
       {onMapClick && <MapClickHandler onClick={onMapClick} />}
 
       {userCoords && (
-        <Marker position={[userCoords.lat, userCoords.lng]} icon={userLocationIcon}>
-          <Popup>
-            <div style={{ padding: '10px 14px' }}>
-              <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>You are here</p>
-            </div>
-          </Popup>
-        </Marker>
+        <Marker position={[userCoords.lat, userCoords.lng]} icon={userLocationIcon} />
       )}
 
-      {listings.map((listing) => (
-        <Marker
-          key={listing.id}
-          position={[listing.lat, listing.lng]}
-          icon={priceIcon(listing.rent_amount)}
-          eventHandlers={{ click: () => navigate(`/listing/${listing.id}`) }}
-        >
-          <Popup>
-            <div style={{ padding: '12px 14px', minWidth: 180 }}>
-              <p style={{ fontWeight: 600, fontSize: 13, margin: '0 0 4px' }}>{listing.title}</p>
-              <p style={{ fontFamily: 'Bricolage Grotesque, sans-serif', fontWeight: 700, fontSize: 14, margin: '0 0 2px' }}>
-                ₹{Number(listing.rent_amount).toLocaleString('en-IN')}/mo
-              </p>
-              <p style={{ fontSize: 11, opacity: 0.5, margin: '0 0 10px' }}>{listing.city}</p>
-              <button
-                onClick={() => navigate(`/listing/${listing.id}`)}
-                style={{
-                  fontSize: 12, fontWeight: 500,
-                  background: '#0a0a0a', color: 'white',
-                  padding: '5px 12px', borderRadius: 8,
-                  border: 'none', cursor: 'pointer', width: '100%',
-                }}
-              >
-                View details
-              </button>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {listings.map((listing) => {
+        const hovered = listing.id === hoveredId
+        return (
+          <Marker
+            key={listing.id}
+            position={[listing.lat, listing.lng]}
+            icon={listingCardIcon(listing, hovered)}
+            zIndexOffset={hovered ? 1000 : 0}
+            eventHandlers={{ click: () => handleMarkerClick(listing) }}
+          />
+        )
+      })}
     </MapContainer>
   )
 }
