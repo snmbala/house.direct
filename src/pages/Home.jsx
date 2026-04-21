@@ -81,7 +81,7 @@ function MobileCard({ listing, distKm, onTap }) {
       onClick={onTap}
     >
       {/* Image grid — same logic as desktop ListingCard */}
-      <div className="h-40 flex gap-0.5 overflow-hidden">
+      <div className="h-48 flex gap-0.5 overflow-hidden">
         {images.length === 0 && (
           <div className="w-full h-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-3xl">🏠</div>
         )}
@@ -409,7 +409,7 @@ export default function Home() {
         </div>
 
         {/* Card carousel — natural flex row, always visible above tab bar */}
-        <div className="shrink-0 bg-white dark:bg-neutral-950 border-t border-neutral-100 dark:border-neutral-900 pt-3 pb-3">
+        <div className="shrink-0 bg-transparent pt-3 pb-3">
 
           {/* Count + dots */}
           <div className="px-4 mb-2.5 flex items-center justify-between">
@@ -435,7 +435,7 @@ export default function Home() {
           {loading ? (
             <div className="flex gap-3 px-4">
               {Array(2).fill(0).map((_, i) => (
-                <div key={i} className="shrink-0 w-[82vw] h-[168px] bg-neutral-100 dark:bg-neutral-900 rounded-2xl animate-pulse" />
+                <div key={i} className="shrink-0 w-[82vw] h-[200px] bg-neutral-100 dark:bg-neutral-900 rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
