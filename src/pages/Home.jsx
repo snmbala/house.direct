@@ -321,7 +321,7 @@ function DesktopFilterBar({ search, setSearch, propType, setPropType, maxRent, s
 export default function Home() {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const { city, setCity, cityManuallySelected } = useCity()
-  const { search, setSearch, propType, maxRent, nearbyMode, setNearbyMode, radiusKm, userCoords, setUserCoords, locationArea } = useFilters()
+  const { search, setSearch, propType, setPropType, maxRent, setMaxRent, nearbyMode, setNearbyMode, radiusKm, setRadiusKm, userCoords, setUserCoords, locationArea, setLocationArea } = useFilters()
 
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
