@@ -8,6 +8,13 @@ export default function AuthModal({ onClose }) {
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -21,8 +28,17 @@ export default function AuthModal({ onClose }) {
     setError('')
     const { error } = await signInWithOtp(email)
     setLoading(false)
-    if (error) setError(error.message)
-    else setSent(true)
+    if (error) {
+      if (error.message?.toLowerCase().includes('rate limit') || error.status === 429) {
+        setError('Too many attempts — please wait a minute before trying again.')
+        setCooldown(60)
+      } else {
+        setError(error.message)
+      }
+    } else {
+      setSent(true)
+      setCooldown(60)
+    }
   }
 
   return (
@@ -69,11 +85,11 @@ export default function AuthModal({ onClose }) {
               {error && <p className="text-red-500 text-xs">{error}</p>}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || cooldown > 0}
                 className="w-full bg-neutral-950 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-100 text-white dark:text-black font-medium py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading && <Loader2 size={14} className="animate-spin" />}
-                Send magic link
+                {cooldown > 0 ? `Resend in ${cooldown}s` : 'Send magic link'}
               </button>
             </form>
           </>
