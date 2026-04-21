@@ -320,10 +320,10 @@ export default function Home() {
         description={`Browse ${filtered.length} rental properties${city !== 'All Cities' ? ` in ${city}` : ' near you'} — apartments, houses, PGs and villas. No broker fees.`}
       />
 
-      <div className="relative h-full bg-neutral-200 dark:bg-neutral-900">
+      <div className="flex flex-col h-full bg-neutral-100 dark:bg-neutral-900">
 
-        {/* Full-screen map */}
-        <div className="absolute inset-0">
+        {/* Map section — flex-1, search bar floats over it */}
+        <div className="relative flex-1 min-h-0">
           <ListingsMap
             listings={filtered}
             center={mapCenter}
@@ -332,48 +332,47 @@ export default function Home() {
             onSelect={handleMapSelect}
             hoveredId={hoveredId}
           />
-        </div>
 
-        {/* Floating search bar */}
-        <div className="absolute top-0 left-0 right-0 z-[400] px-3 pt-3">
-          <div className="flex items-center gap-2 bg-white/92 dark:bg-neutral-950/92 backdrop-blur-md rounded-2xl px-3 py-2.5 shadow-lg">
-            <Search size={15} className="text-neutral-400 dark:text-neutral-600 shrink-0" />
-            <input
-              type="text"
-              placeholder="Search area, city or title…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="flex-1 bg-transparent text-neutral-950 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 text-sm font-medium focus:outline-none"
-            />
-            {search && (
-              <button onClick={() => setSearch('')} className="text-neutral-400 dark:text-neutral-600 shrink-0">
-                <X size={14} />
-              </button>
-            )}
-            <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 shrink-0" />
-            <button
-              onClick={() => setFilterOpen(true)}
-              className="relative flex items-center text-neutral-500 dark:text-neutral-400 px-1"
-            >
-              <SlidersHorizontal size={16} />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1.5 -right-1 w-4 h-4 rounded-full bg-neutral-950 dark:bg-white text-white dark:text-black text-[9px] font-bold flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
+          {/* Floating search bar */}
+          <div className="absolute top-0 left-0 right-0 z-[400] px-3 pt-3 pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-2 bg-white/92 dark:bg-neutral-950/92 backdrop-blur-md rounded-2xl px-3 py-2.5 shadow-lg">
+              <Search size={15} className="text-neutral-400 dark:text-neutral-600 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search area, city or title…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="flex-1 bg-transparent text-neutral-950 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 text-sm font-medium focus:outline-none"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="text-neutral-400 dark:text-neutral-600 shrink-0">
+                  <X size={14} />
+                </button>
               )}
-            </button>
+              <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 shrink-0" />
+              <button
+                onClick={() => setFilterOpen(true)}
+                className="relative flex items-center text-neutral-500 dark:text-neutral-400 px-1"
+              >
+                <SlidersHorizontal size={16} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1 w-4 h-4 rounded-full bg-neutral-950 dark:bg-white text-white dark:text-black text-[9px] font-bold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Card carousel */}
-        <div className="absolute bottom-0 left-0 right-0 z-[300] pb-3">
+        {/* Card carousel — natural flex row, always visible above tab bar */}
+        <div className="shrink-0 bg-white dark:bg-neutral-950 border-t border-neutral-100 dark:border-neutral-900 pt-3 pb-3">
 
-          {/* Result count chip */}
+          {/* Count + dots */}
           <div className="px-4 mb-2.5 flex items-center justify-between">
-            <span className="bg-white/90 dark:bg-neutral-950/90 backdrop-blur-sm text-neutral-700 dark:text-neutral-300 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
+            <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
               {loading ? 'Loading…' : resultLabel}
             </span>
-            {/* Dot indicators */}
             {!loading && filtered.length > 1 && filtered.length <= 12 && (
               <div className="flex items-center gap-1">
                 {filtered.map((_, i) => (
@@ -382,7 +381,7 @@ export default function Home() {
                     className={`rounded-full transition-all duration-300 ${
                       i === activeCardIdx
                         ? 'w-4 h-1.5 bg-neutral-950 dark:bg-white'
-                        : 'w-1.5 h-1.5 bg-white/60 dark:bg-neutral-600'
+                        : 'w-1.5 h-1.5 bg-neutral-300 dark:bg-neutral-700'
                     }`}
                   />
                 ))}
@@ -390,23 +389,20 @@ export default function Home() {
             )}
           </div>
 
-          {/* Horizontal scroll */}
           {loading ? (
             <div className="flex gap-3 px-4">
               {Array(2).fill(0).map((_, i) => (
-                <div key={i} className="shrink-0 w-[82vw] h-[178px] bg-white dark:bg-neutral-900 rounded-2xl animate-pulse" />
+                <div key={i} className="shrink-0 w-[82vw] h-[168px] bg-neutral-100 dark:bg-neutral-900 rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="mx-4 bg-white/90 dark:bg-neutral-950/90 backdrop-blur-sm rounded-2xl px-5 py-5 text-center shadow-lg">
-              <p className="text-2xl mb-1">🏠</p>
-              <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">No rentals found</p>
-              <p className="text-xs text-neutral-400 dark:text-neutral-600 mt-0.5">Try adjusting your filters</p>
+            <div className="mx-4 py-4 text-center">
+              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-500">No rentals found — try adjusting filters</p>
             </div>
           ) : (
             <div
               ref={carouselRef}
-              className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-1 scroll-smooth"
+              className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-0.5"
               style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
               onScroll={onCarouselScroll}
             >
@@ -418,13 +414,12 @@ export default function Home() {
                   onTap={() => setSelectedListing(listing)}
                 />
               ))}
-              {/* trailing spacer so last card can center */}
-              <div className="shrink-0 w-[9vw]" />
+              <div className="shrink-0 w-4" />
             </div>
           )}
         </div>
 
-        {/* Detail overlay — slides up over the map */}
+        {/* Detail overlay */}
         {selectedListing && (
           <div className="absolute inset-0 z-[500] bg-white dark:bg-neutral-950 flex flex-col animate-slide-up">
             <ListingDetailPanel
