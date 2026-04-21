@@ -9,7 +9,10 @@ import { useFilters } from '../hooks/useFilters.jsx'
 import { useKeyboard } from '../hooks/useKeyboard.js'
 import { useMediaQuery } from '../hooks/useMediaQuery.js'
 import SEOMeta from '../components/SEOMeta.jsx'
-import { Search, SlidersHorizontal, X, MapPin, BedDouble, ArrowLeft } from 'lucide-react'
+import { Search, SlidersHorizontal, X, MapPin, BedDouble, ArrowLeft, MessageSquare, User, PlusCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth.jsx'
+import AuthModal from '../components/Auth/AuthModal.jsx'
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371
@@ -167,6 +170,10 @@ export default function Home() {
   const [selectedListing, setSelectedListing] = useState(null)
   const [mapOverride, setMapOverride] = useState(null)
   const [hoveredId, setHoveredId] = useState(null)
+
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [showAuth, setShowAuth] = useState(false)
 
   // Mobile carousel state
   const [activeCardIdx, setActiveCardIdx] = useState(0)
@@ -376,8 +383,8 @@ export default function Home() {
             hoveredId={hoveredId}
           />
 
-          {/* Floating search bar */}
-          <div className="absolute top-0 left-0 right-0 z-[400] px-3 pt-3 pointer-events-none">
+          {/* Floating search + nav bar */}
+          <div className="absolute top-0 left-0 right-0 z-[1001] px-3 pt-3 pointer-events-none">
             <div className="pointer-events-auto flex items-center gap-2 bg-white/92 dark:bg-neutral-950/92 backdrop-blur-md rounded-2xl px-3 py-2.5 shadow-lg">
               <Search size={15} className="text-neutral-400 dark:text-neutral-600 shrink-0" />
               <input
@@ -404,8 +411,29 @@ export default function Home() {
                   </span>
                 )}
               </button>
+              <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 shrink-0" />
+              <button
+                onClick={() => navigate('/messages')}
+                className="relative text-neutral-500 dark:text-neutral-400 px-1"
+              >
+                <MessageSquare size={16} />
+              </button>
+              <button
+                onClick={() => user ? navigate('/profile') : setShowAuth(true)}
+                className="text-neutral-500 dark:text-neutral-400 px-1"
+              >
+                <User size={16} />
+              </button>
+              <button
+                onClick={() => user ? navigate('/post') : setShowAuth(true)}
+                className="w-7 h-7 rounded-lg bg-neutral-950 dark:bg-white flex items-center justify-center shrink-0"
+              >
+                <PlusCircle size={15} className="text-white dark:text-black" />
+              </button>
             </div>
           </div>
+
+          {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
         </div>
 
         {/* Card carousel — natural flex row, always visible above tab bar */}

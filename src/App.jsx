@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Outlet, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './hooks/useAuth'
 import { ThemeProvider } from './hooks/useTheme'
@@ -21,6 +21,8 @@ function Layout() {
   const isMobile = window.matchMedia('(max-width: 767px)').matches
   const [unread, setUnread] = useState(0)
   const { user } = useAuth()
+  const location = useLocation()
+  const isHome = location.pathname === '/'
 
   useEffect(() => {
     if (!user) { setUnread(0); return }
@@ -39,16 +41,18 @@ function Layout() {
   }, [user?.id])
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-black">
+    <div className="flex flex-col h-dvh bg-white dark:bg-black">
       <div className="hidden md:block shrink-0">
         <Navbar />
       </div>
       <div className="flex-1 overflow-hidden">
         <Outlet />
       </div>
-      <div className="md:hidden shrink-0">
-        <BottomTabBar unreadCount={unread} />
-      </div>
+      {!isHome && (
+        <div className="md:hidden shrink-0">
+          <BottomTabBar unreadCount={unread} />
+        </div>
+      )}
     </div>
   )
 }
