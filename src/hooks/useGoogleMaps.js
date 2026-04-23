@@ -28,7 +28,8 @@ export function useGoogleMaps() {
 
     const script = document.createElement('script')
     script.id = SCRIPT_ID
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`
+    // v=beta required by leaflet.gridlayer.googlemutant
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&v=beta`
     script.async = true
     script.onload = () => setLoaded(true)
     script.onerror = () => setError(true)

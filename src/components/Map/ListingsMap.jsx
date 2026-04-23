@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap, ZoomControl } from 'react-leaflet'
+import { MapContainer, Marker, useMapEvents, useMap, ZoomControl } from 'react-leaflet'
 import L from 'leaflet'
+import 'leaflet.gridlayer.googlemutant'
 import { useNavigate } from 'react-router-dom'
+import { useGoogleMaps } from '../../hooks/useGoogleMaps'
 
 const LOCATE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>`
 const HOUSE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
@@ -50,6 +52,20 @@ const userLocationIcon = L.divIcon({
   iconSize: [20, 20],
   iconAnchor: [10, 10],
 })
+
+function GoogleMutantLayer() {
+  const map = useMap()
+  const { loaded } = useGoogleMaps()
+
+  useEffect(() => {
+    if (!loaded) return
+    const layer = L.gridLayer.googleMutant({ type: 'roadmap', maxZoom: 20 })
+    layer.addTo(map)
+    return () => map.removeLayer(layer)
+  }, [loaded, map])
+
+  return null
+}
 
 function MapClickHandler({ onClick }) {
   useMapEvents({ click: onClick })
@@ -108,17 +124,12 @@ export default function ListingsMap({
     <MapContainer
       center={center}
       zoom={zoom}
-      maxZoom={19}
+      maxZoom={20}
       zoomControl={false}
       className={pickMode ? 'cursor-crosshair' : ''}
       style={{ height: '100%', width: '100%' }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
-        maxNativeZoom={19}
-      />
+      <GoogleMutantLayer />
 
       <FlyToCenter center={center} zoom={zoom} />
       <ZoomControl position="bottomright" />
