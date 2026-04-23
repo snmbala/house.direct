@@ -342,15 +342,16 @@ export default function Home() {
       .sort((a, b) => (a._distKm == null || b._distKm == null) ? 0 : a._distKm - b._distKm)
   }, [listings, search, userCoords, amenities])
 
-  // Desktop right panel shows only what's currently visible in the map viewport
+  // Desktop right panel: when text search is active show all matches regardless of viewport;
+  // otherwise show only what's in the current map bounds.
   const visibleListings = useMemo(() => {
-    if (!mapBounds) return allFiltered
+    if (search !== '' || !mapBounds) return allFiltered
     return allFiltered.filter(l =>
       l.lat != null && l.lng != null &&
       l.lat >= mapBounds.south && l.lat <= mapBounds.north &&
       l.lng >= mapBounds.west && l.lng <= mapBounds.east
     )
-  }, [allFiltered, mapBounds])
+  }, [allFiltered, mapBounds, search])
 
   const defaultCenter = cityManuallySelected && city !== 'All Cities'
     ? getCityCenter(city) : userCoords ? [userCoords.lat, userCoords.lng] : [20.5937, 78.9629]
