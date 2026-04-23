@@ -45,7 +45,7 @@ export default function MobileFilterSheet({ onClose }) {
               {CITIES.map(c => (
                 <button
                   key={c}
-                  onClick={() => selectCity(c)}
+                  onClick={() => { selectCity(c); if (c !== 'All Cities') setNearbyMode(false) }}
                   className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
                     city === c
                       ? 'bg-neutral-950 dark:bg-white text-white dark:text-black'

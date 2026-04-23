@@ -4,6 +4,7 @@ import { PlusCircle, ListChecks, LogOut, User, Sun, Moon, Monitor, ChevronDown, 
 import { useAuth } from '../hooks/useAuth.jsx'
 import { useTheme } from '../hooks/useTheme.jsx'
 import { useCity, CITIES } from '../hooks/useCity.jsx'
+import { useFilters } from '../hooks/useFilters.jsx'
 import { supabase } from '../lib/supabase'
 import AuthModal from './Auth/AuthModal'
 
@@ -15,6 +16,7 @@ export default function Navbar() {
   const { user, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
   const { city, selectCity } = useCity()
+  const { setNearbyMode } = useFilters()
 
   const [showAuth, setShowAuth] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -72,7 +74,7 @@ export default function Navbar() {
             <div className="relative hidden sm:block">
               <select
                 value={city}
-                onChange={(e) => selectCity(e.target.value)}
+                onChange={(e) => { selectCity(e.target.value); if (e.target.value !== 'All Cities') setNearbyMode(false) }}
                 className="appearance-none bg-transparent font-[Bricolage_Grotesque] text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white cursor-pointer focus:outline-none pr-4 transition-colors"
               >
                 {CITIES.map(c => <option key={c}>{c}</option>)}
