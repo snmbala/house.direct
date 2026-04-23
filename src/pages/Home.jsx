@@ -4,7 +4,7 @@ import ListingsMap from '../components/Map/ListingsMap'
 import ListingCard from '../components/Listing/ListingCard'
 import MobileCard from '../components/Listing/MobileCard'
 import MobileFilterSheet from '../components/Mobile/MobileFilterSheet'
-import { useCity } from '../hooks/useCity.jsx'
+import { useCity, CITIES } from '../hooks/useCity.jsx'
 import { useFilters } from '../hooks/useFilters.jsx'
 import { useMediaQuery } from '../hooks/useMediaQuery.js'
 import SEOMeta from '../components/SEOMeta.jsx'
@@ -54,6 +54,7 @@ function DesktopFilterBar({
   search, setSearch, propType, setPropType, maxRent, setMaxRent,
   nearbyMode, setNearbyMode, radiusKm, setRadiusKm,
   locationArea, setLocationArea, setUserCoords, userCoords, activeFilterCount,
+  setMapOverride,
 }) {
   const [openPanel, setOpenPanel] = useState(null) // 'propType' | 'price' | 'location'
   const barRef = useRef(null)
@@ -72,11 +73,17 @@ function DesktopFilterBar({
       {/* Search input */}
       <div className="flex items-center gap-2 bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 flex-1 max-w-sm focus-within:border-neutral-950 dark:focus-within:border-white transition-colors">
         <Search size={14} className="text-neutral-400 dark:text-neutral-600 shrink-0" />
-        <input
-          type="text"
+        <PlacesAutocomplete
+          externalValue={search}
+          onChange={(v) => setSearch(v)}
+          onPlaceSelect={({ lat, lng, name, city: placeCity }) => {
+            setUserCoords({ lat, lng })
+            setNearbyMode(true)
+            const isCityLevel = CITIES.includes(placeCity)
+            setMapOverride({ center: [lat, lng], zoom: isCityLevel ? 12 : 15 })
+            setSearch(name || placeCity || '')
+          }}
           placeholder="Search city, area or title…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
           className="flex-1 bg-transparent text-sm text-neutral-950 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none min-w-0"
         />
         {search && (
@@ -373,6 +380,7 @@ export default function Home() {
           setUserCoords={setUserCoords}
           userCoords={userCoords}
           activeFilterCount={activeFilterCount}
+          setMapOverride={setMapOverride}
         />
 
         <div className="flex-1 overflow-hidden flex">
@@ -441,11 +449,17 @@ export default function Home() {
           <div className="absolute top-0 left-0 right-0 z-[1001] px-3 pt-3 pointer-events-none">
             <div className="pointer-events-auto flex items-center gap-2 bg-white/92 dark:bg-neutral-950/92 backdrop-blur-md rounded-2xl px-3 py-2.5 shadow-lg">
               <Search size={15} className="text-neutral-400 dark:text-neutral-600 shrink-0" />
-              <input
-                type="text"
+              <PlacesAutocomplete
+                externalValue={search}
+                onChange={(v) => setSearch(v)}
+                onPlaceSelect={({ lat, lng, name, city: placeCity }) => {
+                  setUserCoords({ lat, lng })
+                  setNearbyMode(true)
+                  const isCityLevel = CITIES.includes(placeCity)
+                  setMapOverride({ center: [lat, lng], zoom: isCityLevel ? 12 : 15 })
+                  setSearch(name || placeCity || '')
+                }}
                 placeholder="Search area, city or title…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
                 className="flex-1 bg-transparent text-neutral-950 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 text-sm font-medium focus:outline-none"
               />
               {search && (
