@@ -30,13 +30,31 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [10, 10],
 })
 
+const MAP_STYLES = [
+  // Strip all POI icons and labels (cafes, shops, hospitals, etc.)
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  // Strip transit lines and stations
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  // Remove road shield/icon clutter
+  { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  // Soften highway colour
+  { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#f0ede8' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#ddd8d0' }] },
+  // Soften arterial roads
+  { featureType: 'road.arterial', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+  // Soften water colour
+  { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#c8dff0' }] },
+  // Slightly mute landscape
+  { featureType: 'landscape', elementType: 'geometry.fill', stylers: [{ color: '#f5f2ee' }] },
+]
+
 function GoogleMutantLayer() {
   const map = useMap()
   const { loaded } = useGoogleMaps()
 
   useEffect(() => {
     if (!loaded) return
-    const layer = new GoogleMutant({ type: 'roadmap', maxZoom: 20 })
+    const layer = new GoogleMutant({ type: 'roadmap', maxZoom: 20, styles: MAP_STYLES })
     layer.addTo(map)
     return () => map.removeLayer(layer)
   }, [loaded, map])
