@@ -52,9 +52,7 @@ const PROPERTY_TYPES = ['All', 'Apartment', 'House', 'PG', 'Studio', 'Villa']
 
 function DesktopFilterBar({
   search, setSearch, propType, setPropType, maxRent, setMaxRent,
-  nearbyMode, setNearbyMode, radiusKm, setRadiusKm,
-  locationArea, setLocationArea, setUserCoords, userCoords, activeFilterCount,
-  setMapOverride,
+  setUserCoords, activeFilterCount, setMapOverride,
 }) {
   const [openPanel, setOpenPanel] = useState(null) // 'propType' | 'price' | 'location'
   const barRef = useRef(null)
@@ -78,7 +76,6 @@ function DesktopFilterBar({
           onChange={(v) => setSearch(v)}
           onPlaceSelect={({ lat, lng, name, city: placeCity }) => {
             setUserCoords({ lat, lng })
-            setNearbyMode(true)
             const isCityLevel = CITIES.includes(placeCity)
             setMapOverride({ center: [lat, lng], zoom: isCityLevel ? 12 : 15 })
             setSearch(name || placeCity || '')
@@ -158,63 +155,9 @@ function DesktopFilterBar({
         )}
       </div>
 
-      {/* Location / Nearby pill */}
-      <div className="relative">
-        <button
-          onClick={() => toggle('location')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-sm font-medium transition-colors ${
-            nearbyMode || locationArea
-              ? 'border-neutral-950 dark:border-white bg-neutral-950 dark:bg-white text-white dark:text-black'
-              : 'border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-600'
-          }`}
-        >
-          {locationArea ? locationArea : nearbyMode ? `Nearby · ${radiusKm} km` : 'Location'}
-          <ChevronDown size={13} className={openPanel === 'location' ? 'rotate-180' : ''} style={{ transition: 'transform 0.15s' }} />
-        </button>
-        {openPanel === 'location' && (
-          <div className="absolute top-full left-0 mt-2 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl z-[1100] p-4 min-w-[240px] search-dropdown space-y-3">
-            <button
-              onClick={() => { setNearbyMode(true); setLocationArea('') }}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${nearbyMode ? 'bg-neutral-950 dark:bg-white text-white dark:text-black' : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-800'}`}
-            >
-              Nearby
-            </button>
-            {nearbyMode && (
-              <div>
-                <div className="flex justify-between text-xs text-neutral-500 mb-1">
-                  <span>Radius</span>
-                  <span className="font-semibold text-neutral-950 dark:text-white">{radiusKm} km</span>
-                </div>
-                <input
-                  type="range" min="1" max="25" value={radiusKm}
-                  onChange={(e) => setRadiusKm(Number(e.target.value))}
-                  className="w-full accent-neutral-950 dark:accent-white"
-                />
-              </div>
-            )}
-            <PlacesAutocomplete
-              externalValue={locationArea}
-              onChange={(v) => { setLocationArea(v); setNearbyMode(!v.trim()) }}
-              onPlaceSelect={({ lat, lng, name }) => {
-                setUserCoords({ lat, lng })
-                setNearbyMode(true)
-                setLocationArea(name || '')
-                setOpenPanel(null)
-              }}
-              placeholder="Search area (e.g. Whitefield)"
-              className="w-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-950 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-950 dark:focus:ring-white"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Clear all — only resets nearbyMode if coords are available */}
       {activeFilterCount > 0 && (
         <button
-          onClick={() => {
-            setPropType('All'); setMaxRent(''); setNearbyMode(!!userCoords)
-            setRadiusKm(6); setLocationArea(''); setSearch('')
-          }}
+          onClick={() => { setPropType('All'); setMaxRent(''); setSearch('') }}
           className="text-xs text-neutral-400 dark:text-neutral-600 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors px-1"
         >
           Clear all
@@ -229,8 +172,7 @@ export default function Home() {
   const { city, setCity, cityManuallySelected } = useCity()
   const {
     search, setSearch, propType, setPropType, maxRent, setMaxRent,
-    nearbyMode, setNearbyMode, radiusKm, setRadiusKm,
-    userCoords, setUserCoords, locationArea, setLocationArea,
+    userCoords, setUserCoords,
   } = useFilters()
 
   const [listings, setListings] = useState([])
@@ -238,6 +180,7 @@ export default function Home() {
   const [fetchError, setFetchError] = useState(null)
   const [mapOverride, setMapOverride] = useState(null)
   const [hoveredId, setHoveredId] = useState(null)
+  const [mapBounds, setMapBounds] = useState(null)
 
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -254,7 +197,6 @@ export default function Home() {
     detectCity().then((result) => {
       if (!result) return
       setUserCoords({ lat: result.lat, lng: result.lng })
-      setNearbyMode(true)
       if (result.city) setCity(result.city)
     })
   }, [])
@@ -281,35 +223,44 @@ export default function Home() {
 
   useEffect(() => { fetchListings() }, [fetchListings])
 
-  const filtered = useMemo(() => {
+  const allFiltered = useMemo(() => {
     const searchLower = search.toLowerCase()
     const searchNorm = (CITY_ALIASES[searchLower] ?? search).toLowerCase()
     return listings
       .filter(l => {
+        if (search === '') return true
         const fields = [l.title, l.city, l.address]
-        const matchSearch = search === '' || fields.some(f =>
+        return fields.some(f =>
           f?.toLowerCase().includes(searchLower) ||
           (searchNorm !== searchLower && f?.toLowerCase().includes(searchNorm))
         )
-        // Don't apply radius filter when text search is active — user is explicitly searching by name
-        const matchRadius = search !== '' ? true : (!nearbyMode || !userCoords || haversineKm(userCoords.lat, userCoords.lng, l.lat, l.lng) <= radiusKm)
-        const matchArea = !locationArea || [l.city, l.address].some(f => f?.toLowerCase().includes(locationArea.toLowerCase()))
-        return matchSearch && matchRadius && matchArea
       })
       .map(l => ({ ...l, _distKm: userCoords ? haversineKm(userCoords.lat, userCoords.lng, l.lat, l.lng) : null }))
       .sort((a, b) => (a._distKm == null || b._distKm == null) ? 0 : a._distKm - b._distKm)
-  }, [listings, search, nearbyMode, userCoords, radiusKm, locationArea])
+  }, [listings, search, userCoords])
+
+  // Desktop right panel shows only what's currently visible in the map viewport
+  const visibleListings = useMemo(() => {
+    if (!mapBounds) return allFiltered
+    return allFiltered.filter(l =>
+      l.lat != null && l.lng != null &&
+      l.lat >= mapBounds.south && l.lat <= mapBounds.north &&
+      l.lng >= mapBounds.west && l.lng <= mapBounds.east
+    )
+  }, [allFiltered, mapBounds])
 
   const defaultCenter = cityManuallySelected && city !== 'All Cities'
     ? getCityCenter(city) : userCoords ? [userCoords.lat, userCoords.lng] : [20.5937, 78.9629]
-  const defaultZoom = cityManuallySelected && city !== 'All Cities' ? 12 : userCoords ? 13 : 5
+  const defaultZoom = cityManuallySelected && city !== 'All Cities' ? 12 : userCoords ? 14 : 5
   const mapCenter = mapOverride ? mapOverride.center : defaultCenter
   const mapZoom = mapOverride ? mapOverride.zoom : defaultZoom
 
+  const handleBoundsChange = useCallback((bounds) => setMapBounds(bounds), [])
+
   // Pan map when active card changes (mobile)
   useEffect(() => {
-    if (!isMobile || !filtered.length) return
-    const l = filtered[activeCardIdx]
+    if (!isMobile || !allFiltered.length) return
+    const l = allFiltered[activeCardIdx]
     if (l?.lat && l?.lng) {
       setMapOverride({ center: [l.lat, l.lng], zoom: 15 })
       setHoveredId(l.id)
@@ -322,7 +273,7 @@ export default function Home() {
       setActiveCardIdx(0)
       carouselRef.current?.scrollTo({ left: 0, behavior: 'instant' })
     }
-  }, [filtered.length, isMobile])
+  }, [allFiltered.length, isMobile])
 
   // Scroll carousel using the card's actual DOM position to avoid magic numbers
   const scrollToCard = useCallback((idx) => {
@@ -353,19 +304,17 @@ export default function Home() {
   // Map marker tap → scroll carousel to that listing (mobile) or open in new tab (desktop)
   const handleMapSelect = useCallback((listing) => {
     if (isMobile) {
-      const idx = filtered.findIndex(l => l.id === listing.id)
+      const idx = allFiltered.findIndex(l => l.id === listing.id)
       if (idx >= 0) scrollToCard(idx)
     } else {
       openListing(listing)
     }
-  }, [isMobile, filtered, scrollToCard])
+  }, [isMobile, allFiltered, scrollToCard])
 
-  const activeFilterCount = [propType !== 'All', maxRent !== '', locationArea !== ''].filter(Boolean).length
-  const resultLabel = locationArea
-    ? `${filtered.length} in ${locationArea}`
-    : nearbyMode && userCoords
-    ? `${filtered.length} within ${radiusKm} km`
-    : `${filtered.length} rentals`
+  const activeFilterCount = [propType !== 'All', maxRent !== ''].filter(Boolean).length
+  const resultLabel = mapBounds
+    ? `${visibleListings.length} in view`
+    : `${allFiltered.length} rentals`
 
   // ── Desktop layout ──────────────────────────────────────────
   if (!isMobile) {
@@ -373,25 +322,21 @@ export default function Home() {
       <div className="flex flex-col h-full bg-white dark:bg-black">
         <SEOMeta
           title={city !== 'All Cities' ? `Rentals in ${city}` : 'Find Rentals Near You'}
-          description={`Browse ${filtered.length} rental properties${city !== 'All Cities' ? ` in ${city}` : ' near you'} — apartments, houses, PGs and villas. No broker fees.`}
+          description={`Browse ${visibleListings.length} rental properties${city !== 'All Cities' ? ` in ${city}` : ' near you'} — apartments, houses, PGs and villas. No broker fees.`}
         />
 
         <DesktopFilterBar
           search={search} setSearch={setSearch}
           propType={propType} setPropType={setPropType}
           maxRent={maxRent} setMaxRent={setMaxRent}
-          nearbyMode={nearbyMode} setNearbyMode={setNearbyMode}
-          radiusKm={radiusKm} setRadiusKm={setRadiusKm}
-          locationArea={locationArea} setLocationArea={setLocationArea}
           setUserCoords={setUserCoords}
-          userCoords={userCoords}
           activeFilterCount={activeFilterCount}
           setMapOverride={setMapOverride}
         />
 
         <div className="flex-1 overflow-hidden flex">
           <div className="flex-1 min-w-0">
-            <ListingsMap listings={filtered} center={mapCenter} zoom={mapZoom} userCoords={userCoords} onSelect={handleMapSelect} hoveredId={hoveredId} />
+            <ListingsMap listings={allFiltered} center={mapCenter} zoom={mapZoom} userCoords={userCoords} onSelect={handleMapSelect} hoveredId={hoveredId} onBoundsChange={handleBoundsChange} />
           </div>
 
           <div className="w-[600px] shrink-0 bg-white dark:bg-black border-l border-neutral-200 dark:border-neutral-900 flex flex-col overflow-hidden">
@@ -412,14 +357,14 @@ export default function Home() {
                     <p className="font-medium text-neutral-600 dark:text-neutral-400 text-sm">{fetchError}</p>
                     <button onClick={fetchListings} className="mt-3 text-xs underline text-neutral-500">Retry</button>
                   </div>
-                ) : filtered.length === 0 ? (
+                ) : visibleListings.length === 0 ? (
                   <div className="col-span-2 text-center py-16">
                     <p className="text-3xl mb-3">🏠</p>
-                    <p className="font-medium text-neutral-600 dark:text-neutral-400 text-sm">No rentals found</p>
-                    <p className="text-xs mt-1 text-neutral-400 dark:text-neutral-600">Try adjusting your filters</p>
+                    <p className="font-medium text-neutral-600 dark:text-neutral-400 text-sm">No rentals in this area</p>
+                    <p className="text-xs mt-1 text-neutral-400 dark:text-neutral-600">Pan or zoom out to see more</p>
                   </div>
                 ) : (
-                  filtered.map(listing => (
+                  visibleListings.map(listing => (
                     <ListingCard key={listing.id} listing={listing} distKm={listing._distKm} onHover={setHoveredId} />
                   ))
                 )}
@@ -436,19 +381,20 @@ export default function Home() {
     <>
       <SEOMeta
         title={city !== 'All Cities' ? `Rentals in ${city}` : 'Find Rentals Near You'}
-        description={`Browse ${filtered.length} rental properties${city !== 'All Cities' ? ` in ${city}` : ' near you'} — apartments, houses, PGs and villas. No broker fees.`}
+        description={`Browse ${allFiltered.length} rental properties${city !== 'All Cities' ? ` in ${city}` : ' near you'} — apartments, houses, PGs and villas. No broker fees.`}
       />
 
       <div className="flex flex-col h-full bg-neutral-100 dark:bg-neutral-900">
 
         <div className="relative flex-1 min-h-0">
           <ListingsMap
-            listings={filtered}
+            listings={allFiltered}
             center={mapCenter}
             zoom={mapZoom}
             userCoords={userCoords}
             onSelect={handleMapSelect}
             hoveredId={hoveredId}
+            onBoundsChange={handleBoundsChange}
           />
 
           {/* Floating search + nav bar */}
@@ -460,7 +406,6 @@ export default function Home() {
                 onChange={(v) => setSearch(v)}
                 onPlaceSelect={({ lat, lng, name, city: placeCity }) => {
                   setUserCoords({ lat, lng })
-                  setNearbyMode(true)
                   const isCityLevel = CITIES.includes(placeCity)
                   setMapOverride({ center: [lat, lng], zoom: isCityLevel ? 12 : 15 })
                   setSearch(name || placeCity || '')
@@ -516,9 +461,9 @@ export default function Home() {
             <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400">
               {loading ? 'Loading…' : fetchError ? 'Failed to load' : resultLabel}
             </span>
-            {!loading && !fetchError && filtered.length > 1 && filtered.length <= 12 && (
+            {!loading && !fetchError && allFiltered.length > 1 && allFiltered.length <= 12 && (
               <div className="flex items-center gap-1">
-                {filtered.map((_, i) => (
+                {allFiltered.map((_, i) => (
                   <div
                     key={i}
                     className={`rounded-full transition-all duration-300 ${
@@ -543,7 +488,7 @@ export default function Home() {
               <p className="text-sm font-medium text-neutral-500">{fetchError}</p>
               <button onClick={fetchListings} className="mt-2 text-xs underline text-neutral-400">Retry</button>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : allFiltered.length === 0 ? (
             <div className="mx-4 py-4 text-center">
               <p className="text-sm font-medium text-neutral-500 dark:text-neutral-500">No rentals found — try adjusting filters</p>
             </div>
@@ -554,7 +499,7 @@ export default function Home() {
               style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
               onScroll={onCarouselScroll}
             >
-              {filtered.map(listing => (
+              {allFiltered.map(listing => (
                 <MobileCard
                   key={listing.id}
                   listing={listing}

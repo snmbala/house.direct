@@ -1,16 +1,15 @@
 import { X, SlidersHorizontal } from 'lucide-react'
 import { useFilters } from '../../hooks/useFilters.jsx'
 import { useCity, CITIES } from '../../hooks/useCity.jsx'
-import PlacesAutocomplete from '../Places/PlacesAutocomplete.jsx'
 
 const PROPERTY_TYPES = ['All', 'Apartment', 'House', 'PG', 'Studio', 'Villa']
 
 export default function MobileFilterSheet({ onClose }) {
-  const { propType, setPropType, maxRent, setMaxRent, nearbyMode, setNearbyMode, radiusKm, setRadiusKm, locationArea, setLocationArea, setUserCoords } = useFilters()
+  const { propType, setPropType, maxRent, setMaxRent } = useFilters()
   const { city, selectCity } = useCity()
 
   const clearAll = () => {
-    setPropType('All'); setMaxRent(''); setNearbyMode(true); setRadiusKm(6); setLocationArea('')
+    setPropType('All'); setMaxRent('')
   }
 
   return (
@@ -45,7 +44,7 @@ export default function MobileFilterSheet({ onClose }) {
               {CITIES.map(c => (
                 <button
                   key={c}
-                  onClick={() => { selectCity(c); if (c !== 'All Cities') setNearbyMode(false) }}
+                  onClick={() => selectCity(c)}
                   className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
                     city === c
                       ? 'bg-neutral-950 dark:bg-white text-white dark:text-black'
@@ -98,49 +97,6 @@ export default function MobileFilterSheet({ onClose }) {
             </div>
           </div>
 
-          {/* Location */}
-          <div>
-            <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-600 uppercase tracking-widest mb-2.5">Location</p>
-            <div className="space-y-3">
-              <button
-                onClick={() => { setNearbyMode(true); setLocationArea('') }}
-                className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
-                  nearbyMode
-                    ? 'bg-neutral-950 dark:bg-white text-white dark:text-black'
-                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400'
-                }`}
-              >
-                Nearby
-              </button>
-              {nearbyMode && (
-                <div>
-                  <div className="flex justify-between text-xs text-neutral-500 dark:text-neutral-500 mb-1.5">
-                    <span>Radius</span>
-                    <span className="font-semibold text-neutral-950 dark:text-white">{radiusKm} km</span>
-                  </div>
-                  <input
-                    type="range" min="1" max="25" value={radiusKm}
-                    onChange={(e) => setRadiusKm(Number(e.target.value))}
-                    className="w-full accent-neutral-950 dark:accent-white"
-                  />
-                  <div className="flex justify-between text-[10px] text-neutral-400 dark:text-neutral-600 mt-1">
-                    <span>1 km</span><span>25 km</span>
-                  </div>
-                </div>
-              )}
-              <PlacesAutocomplete
-                externalValue={locationArea}
-                onChange={(v) => { setLocationArea(v); setNearbyMode(!v.trim()) }}
-                onPlaceSelect={({ lat, lng, name }) => {
-                  setUserCoords({ lat, lng })
-                  setNearbyMode(true)
-                  setLocationArea(name || '')
-                }}
-                placeholder="Or search area (e.g. Whitefield)"
-                className="w-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-950 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-950 dark:focus:ring-white"
-              />
-            </div>
-          </div>
         </div>
 
         {/* Done */}

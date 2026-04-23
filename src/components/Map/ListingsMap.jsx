@@ -73,6 +73,21 @@ function MapClickHandler({ onClick }) {
   return null
 }
 
+function BoundsTracker({ onBoundsChange }) {
+  const map = useMap()
+
+  const emit = () => {
+    const b = map.getBounds()
+    onBoundsChange?.({ south: b.getSouth(), north: b.getNorth(), west: b.getWest(), east: b.getEast() })
+  }
+
+  useMapEvents({ moveend: emit, zoomend: emit })
+
+  useEffect(() => { emit() }, [])
+
+  return null
+}
+
 function FlyToCenter({ center, zoom }) {
   const map = useMap()
   useEffect(() => {
@@ -113,6 +128,7 @@ export default function ListingsMap({
   userCoords = null,
   onSelect = null,
   hoveredId = null,
+  onBoundsChange = null,
 }) {
   const navigate = useNavigate()
   const { error: mapsError } = useGoogleMaps()
@@ -144,6 +160,7 @@ export default function ListingsMap({
         <FlyToCenter center={center} zoom={zoom} />
         <ZoomControl position="bottomright" />
         <LocateButton userCoords={userCoords} />
+        <BoundsTracker onBoundsChange={onBoundsChange} />
         {onMapClick && <MapClickHandler onClick={onMapClick} />}
 
         {userCoords && (
